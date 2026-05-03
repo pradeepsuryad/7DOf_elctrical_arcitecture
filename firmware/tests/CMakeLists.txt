@@ -17,11 +17,16 @@ FetchContent_MakeAvailable(googletest)
 # Add test_*.cpp files here as control-loop code grows.
 
 add_executable(arm-core-tests
-    # test_can_loopback.cpp   (TODO: add first test)
+    test_joint_controller.cpp
+    # Sources under test (SIM build — no STM32 HAL calls compiled in)
+    ${CMAKE_SOURCE_DIR}/src/joint_controller.cpp
 )
 
 target_link_libraries(arm-core-tests PRIVATE GTest::gtest_main)
-target_include_directories(arm-core-tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(arm-core-tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}   # for fake_can_bus.hpp
+)
 
 include(GoogleTest)
 gtest_discover_tests(arm-core-tests)

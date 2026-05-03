@@ -1,0 +1,39 @@
+# Build artifacts
+build/
+out/
+bin/
+obj/
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+
+# Altium / EDA
+History/
+Project Outputs*/
+__Previews/
+*.SchDocPreview
+*.PcbDocPreview
+*.PrjPcbStructure
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Python (sims, scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs / data
+*.log
+*.csv.bak

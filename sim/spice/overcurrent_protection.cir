@@ -1,0 +1,94 @@
+* ══════════════════════════════════════════════════════════════════════════════
+* Overcurrent Protection — 48 V Bus
+* Arm-core project / sim/spice/overcurrent_protection.cir
+*
+* Circuit topology:
+*
+*   48V_IN ──── Rsense ──── drain(M1) ──── 48V_OUT (to motor drivers)
+*                │                │
+*              V_sense        source(M1) ──── GND
+*                │
+*           ┌───▼───────────────────────────────┐
+*           │  LM393 open-collector comparator   │
+*           │  IN+ = V_sense hi-side             │
+*           │  IN- = V_ref  (trip threshold)      │
+*           │  OUT → gate(M1) via R_gate          │
+*           │        (active-low: OUT=low → FET off) │
+*           └───────────────────────────────────┘
+*
+* Design parameters:
+*   Bus voltage:       48 V
+*   Max continuous:    10 A  (motor draw)
+*   Trip current:      15 A  (50 % headroom over continuous)
+*   Rsense:            5 mΩ  (low loss: P = I² × R = 10² × 0.005 = 0.5 W)
+*   V_trip = I_trip × Rsense = 15 × 0.005 = 75 mV
+*   V_ref:             75 mV
+*   FET:               IRF2907  (75 V, 209 A, Rds_on 4.5 mΩ)
+*   Response time:     < 1 µs  (comparator propagation ~150 ns + gate RC ~300 ns)
+*
+* Run this .tran simulation to see:
+*   1. Normal operation (10 A load): FET stays on, V_sense < V_ref
+*   2. Fault at t=50µs (25 A pulse): comparator trips, FET turns off in ~500 ns
+* ══════════════════════════════════════════════════════════════════════════════
+
+.title Overcurrent Protection 48V Bus
+
+* ── Supply ────────────────────────────────────────────────────────────────────
+Vbus   48V_IN  GND  48
+
+* ── Sense resistor (5 mΩ, 2 W rated) ─────────────────────────────────────────
+Rsense  48V_IN  SENSE_HI  5m
+
+* ── Main bus MOSFET (simplified SPICE model for IRF2907) ──────────────────────
+* Real design: use manufacturer SPICE model from Vishay/Infineon
+M1  SENSE_HI  GATE  GND  GND  NMOS_IRF2907
+.model NMOS_IRF2907 NMOS(
++  Level=1
++  Vto=4         ; gate threshold ~4 V
++  Kp=200        ; transconductance parameter (simplified)
++  Rd=0.0045     ; Rds_on = 4.5 mΩ
++  Rs=0          ;
++  Cgd=1.5n      ; gate-drain capacitance (affects turn-off speed)
++  Cgs=3.5n      ; gate-source capacitance
++ )
+
+* ── Gate drive: pull-up to 12 V via Rpullup, comparator pulls down ────────────
+* Gate is held HIGH (FET on) by Rpullup; comparator output sinks gate to GND.
+Vgate_supply  GATE_VCC  GND  12
+Rpullup       GATE_VCC  GATE  10k
+
+* ── LM393 comparator model (behavioural) ──────────────────────────────────────
+* The comparator output is open-collector.  We model it as a voltage-controlled
+* switch: closes (pulls gate LOW) when V(SENSE_HI) - V(GND) > V_ref.
+* In a real netlist, substitute the LM393 subcircuit from Texas Instruments.
+Vref    VREF    GND   75m          ; 75 mV trip threshold
+Ecomp   COMP_OUT  GND  VALUE={IF(V(SENSE_HI)-V(GND) > V(VREF), 0, 12)}
+Rcomp   COMP_OUT  GATE  100        ; comparator output → gate
+
+* ── Gate resistor (limit di/dt and ringing during turn-off) ───────────────────
+Rgate   GATE  GATE_NODE  10        ; 10 Ω slows turn-off to ~300 ns
+
+* ── Bus output capacitor (holds voltage briefly during trip) ──────────────────
+Cbus    48V_OUT  GND  100u  IC=48  ; 100 µF electrolytic, pre-charged to 48 V
+
+* ── Load: piecewise linear current source to simulate fault ───────────────────
+* t=0–50µs:  10 A (normal)
+* t=50µs+:   25 A (fault, overcurrent condition)
+Iload   48V_OUT  GND  PWL(
++  0     10
++  50u   10
++  50.1u 25
++  500u  25
++ )
+
+* ── Probing ────────────────────────────────────────────────────────────────────
+* Plot these nodes in LTspice / ngspice:
+*   V(SENSE_HI)   → voltage across Rsense (= I_bus × 5 mΩ)
+*   V(GATE)       → gate voltage (12 V = on, 0 V = off)
+*   V(48V_OUT)    → output bus voltage (drops when FET trips off)
+*   I(Iload)      → load current
+
+* ── Transient analysis ─────────────────────────────────────────────────────────
+.tran 10n 500u 0 10n     ; step=10 ns, stop=500 µs, start=0, max_step=10 ns
+.probe V(SENSE_HI) V(GATE) V(48V_OUT) I(Iload)
+.end

@@ -1,0 +1,14 @@
+{
+  "meta": { "filename": "sensor-interface.kicad_pro", "version": 1 },
+  "schematic": {
+    "annotate_start_num": 0,
+    "drawing": { "default_line_thickness": 6.0, "default_text_size": 1.27 },
+    "meta": { "version": 1 },
+    "net_format_name": "KiCad"
+  },
+  "boards": [],
+  "libraries": {
+    "pinned_symbol_libs": [],
+    "pinned_footprint_libs": []
+  }
+}

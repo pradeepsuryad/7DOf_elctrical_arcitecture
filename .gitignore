@@ -9,6 +9,14 @@ obj/
 *.bin
 *.map
 
+# KiCad generated outputs (commit source files, not fabrication outputs)
+hardware/**/*-backups/
+hardware/**/fp-info-cache
+hardware/**/*.kicad_prl
+hardware/**/gerbers/
+hardware/**/*-drc.rpt
+hardware/**/__pycache__/
+
 # IDE
 .vscode/
 .idea/

@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+    branches: ["master", "main"]
+
+# ── What this pipeline does ───────────────────────────────────────────────────
+#
+# Job 1: firmware-tests
+#   Builds the firmware in SIM mode (native x86-64, no cross-compiler) and
+#   runs the full Google Test suite.  This catches regressions in:
+#     - CAN frame packing / unpacking
+#     - PID direction and anti-windup behaviour
+#     - Fault latch and clear logic
+#     - Soft position limit enforcement
+#
+# Job 2: sim-analysis
+#   Installs Python deps and runs overcurrent_analysis.py to verify the
+#   analytical model and plot generation don't crash.
+#
+# Job 3: hil-lint
+#   Runs ruff (fast Python linter) over the HIL scripts to catch syntax and
+#   style errors before they reach a lab session.
+#
+# No cross-compilation job here — the MCU ELF requires vendor linker scripts
+# and startup files that live with the BSP, not in this repo.
+# ─────────────────────────────────────────────────────────────────────────────
+
+jobs:
+
+  # ── Job 1: build + test firmware (SIM target) ─────────────────────────────
+  firmware-tests:
+    name: Firmware unit tests (SIM)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y cmake ninja-build g++ libasan6 libubsan1
+
+      # Cache the Google Test download so it doesn't re-fetch on every push.
+      - name: Cache CMake FetchContent (Google Test)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cmake/fetch-content
+          key: gtest-v1.14.0-${{ runner.os }}
+
+      - name: Configure (SIM mode, ASAN + UBSAN)
+        run: |
+          cmake -S firmware -B build/sim \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TARGET=SIM \
+            -DFETCHCONTENT_BASE_DIR=$HOME/.cmake/fetch-content
+
+      - name: Build
+        run: cmake --build build/sim --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build/sim --output-on-failure --parallel 4
+
+      # Upload the test XML report so GitHub can show per-test pass/fail.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/sim/Testing/
+
+  # ── Job 2: SPICE analysis (analytical model smoke test) ───────────────────
+  sim-analysis:
+    name: SPICE analysis (analytical)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('sim/analysis/requirements.txt') }}
+
+      - name: Install dependencies
+        run: pip install -r sim/analysis/requirements.txt
+
+      - name: Run analytical model
+        run: |
+          cd sim/analysis
+          python overcurrent_analysis.py
+          # Verify all three figures were generated.
+          ls figures/01_trip_current_vs_rsense.png
+          ls figures/02_gate_fall_time.png
+          ls figures/03_protection_timeline.png
+
+      - name: Upload figures
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-figures
+          path: sim/analysis/figures/
+
+  # ── Job 3: HIL scripts lint ───────────────────────────────────────────────
+  hil-lint:
+    name: HIL scripts lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint HIL scripts
+        run: ruff check hil/scripts/ sim/analysis/
+
+      - name: Check formatting
+        run: ruff format --check hil/scripts/ sim/analysis/

@@ -63,6 +63,22 @@ public:
                       uint8_t* data, uint16_t len) = 0;
 };
 
+// ── Encoder ───────────────────────────────────────────────────────────────────
+// Abstract rotary encoder.  Concrete implementations: As5047p (SPI magnetic),
+// or a FakeEncoder in tests that returns scripted positions.
+class IEncoder {
+public:
+    virtual ~IEncoder() = default;
+
+    // Read the current angle. Returns false on SPI fault or parity error.
+    // On success, writes the angle to `angle_rad` (range: 0 to 2π).
+    virtual bool read_angle(float& angle_rad) = 0;
+
+    // True if the last read detected a hardware fault (AGC overflow,
+    // CORDIC overflow, or offset compensation not finished).
+    virtual bool has_error() const = 0;
+};
+
 // ── System clock / time ───────────────────────────────────────────────────────
 class ISysClock {
 public:

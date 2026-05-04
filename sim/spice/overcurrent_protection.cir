@@ -90,5 +90,19 @@ Iload   48V_OUT  GND  PWL(
 
 * ── Transient analysis ─────────────────────────────────────────────────────────
 .tran 10n 500u 0 10n     ; step=10 ns, stop=500 µs, start=0, max_step=10 ns
+
+* ── ngspice batch output ────────────────────────────────────────────────────────
+* Run with:  ngspice -b overcurrent_protection.cir
+* Produces:  spice_output.dat  (ASCII, parseable by sim/analysis/spice_parser.py)
+*
+* Column order in the output file:
+*   time  V(SENSE_HI)  V(GATE)  V(48V_OUT)  I(Iload)
+.control
+run
+wrdata spice_output.dat V(SENSE_HI) V(GATE) V(48V_OUT) I(Iload)
+quit
+.endc
+
+* LTspice: use the .probe line below (comment out .control block above).
 .probe V(SENSE_HI) V(GATE) V(48V_OUT) I(Iload)
 .end

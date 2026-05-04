@@ -9,14 +9,6 @@ obj/
 *.bin
 *.map
 
-# Altium / EDA
-History/
-Project Outputs*/
-__Previews/
-*.SchDocPreview
-*.PcbDocPreview
-*.PrjPcbStructure
-
 # IDE
 .vscode/
 .idea/

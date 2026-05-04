@@ -1,0 +1,4 @@
+# HIL scripts dependencies
+# Install with: pip install -r requirements.txt
+
+python-can>=4.3.0   # USB-CAN adapter support (CANable/slcan, PEAK PCAN, Kvaser)

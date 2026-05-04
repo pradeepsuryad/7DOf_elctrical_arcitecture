@@ -37,3 +37,5 @@ venv/
 # Logs / data
 *.log
 *.csv.bak
+hil/logs/*.csv        # HIL run logs — can be large; store externally if needed
+hil/trajectories/*.csv  # generated trajectories — regenerate with gen_trajectory.py

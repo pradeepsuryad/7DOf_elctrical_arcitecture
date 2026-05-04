@@ -1,4 +1,4 @@
-(kicad_sch
+﻿(kicad_sch
   (version 20231120)
   (generator "eeschema")
   (generator_version "7.0.11")
@@ -15,7 +15,6 @@
 
   (lib_symbols
 
-    ;; ── DRV8353RS ─────────────────────────────────────────────────────────────
     (symbol "DRV8353RS"
       (pin_names (offset 1.016))
       (in_bom yes) (on_board yes)
@@ -33,7 +32,6 @@
           (fill (type background)))
       )
       (symbol "DRV8353RS_1_1"
-        ;; Left pins — power and SPI
         (pin power_in line (at -12.7 7.62 0) (length 5.08)
           (name "VM"    (effects (font (size 1.016 1.016))))
           (number "1"   (effects (font (size 1.016 1.016)))))
@@ -64,7 +62,6 @@
         (pin output inverted (at -12.7 -15.24 0) (length 5.08)
           (name "~{nFAULT}"  (effects (font (size 1.016 1.016))))
           (number "10"        (effects (font (size 1.016 1.016)))))
-        ;; Right pins — gate drives and source sense
         (pin output line (at 12.7 7.62 180) (length 5.08)
           (name "GH_A"  (effects (font (size 1.016 1.016))))
           (number "11"  (effects (font (size 1.016 1.016)))))
@@ -95,7 +92,6 @@
       )
     )
 
-    ;; ── IRF2907 N-channel MOSFET ──────────────────────────────────────────────
     (symbol "IRF2907"
       (in_bom yes) (on_board yes)
       (property "Reference" "Q" (at 5.08 0 0)
@@ -107,31 +103,22 @@
       (property "Datasheet" "https://www.vishay.com/docs/91268/91268.pdf" (at 0 0 0)
         (effects (font (size 1.27 1.27)) (hide yes)))
       (symbol "IRF2907_0_1"
-        ;; Circle body
         (circle (center 1.016 0) (radius 2.8194)
           (stroke (width 0.254) (type default)) (fill (type background)))
-        ;; Gate horizontal line
         (polyline (pts (xy -2.54 0) (xy -0.762 0))
           (stroke (width 0.254) (type default)) (fill (type none)))
-        ;; Gate vertical bar
         (polyline (pts (xy -0.762 -2.286) (xy -0.762 2.286))
           (stroke (width 0.508) (type default)) (fill (type none)))
-        ;; Drain connection
         (polyline (pts (xy -0.762 1.778) (xy 0.508 1.778) (xy 0.508 1.27))
           (stroke (width 0.254) (type default)) (fill (type none)))
-        ;; Source connection
         (polyline (pts (xy -0.762 -1.778) (xy 0.508 -1.778) (xy 0.508 -1.27))
           (stroke (width 0.254) (type default)) (fill (type none)))
-        ;; Channel line
         (polyline (pts (xy 0.508 1.27) (xy 0.508 -1.27))
           (stroke (width 0.254) (type default)) (fill (type none)))
-        ;; Drain to pin
         (polyline (pts (xy 0.508 2.54) (xy 2.54 2.54))
           (stroke (width 0.254) (type default)) (fill (type none)))
-        ;; Source to pin
         (polyline (pts (xy 0.508 -2.54) (xy 2.54 -2.54))
           (stroke (width 0.254) (type default)) (fill (type none)))
-        ;; Arrow (N-channel direction)
         (polyline (pts (xy 0.508 -0.508) (xy -0.762 -0.508) (xy -0.762 0.508) (xy 0.508 0.508))
           (stroke (width 0) (type default)) (fill (type none)))
       )
@@ -148,7 +135,6 @@
       )
     )
 
-    ;; ── Generic resistor (shunt) ──────────────────────────────────────────────
     (symbol "R_Shunt"
       (in_bom yes) (on_board yes)
       (property "Reference" "R" (at 1.778 0 90)
@@ -171,7 +157,6 @@
       )
     )
 
-    ;; ── Generic capacitor ─────────────────────────────────────────────────────
     (symbol "C_Generic"
       (in_bom yes) (on_board yes)
       (property "Reference" "C" (at 1.778 0 0)
@@ -196,7 +181,6 @@
       )
     )
 
-    ;; ── Connector 6-pin (SPI + control) ───────────────────────────────────────
     (symbol "Conn_6pin"
       (pin_names (offset 1.016) (hide yes))
       (in_bom yes) (on_board yes)
@@ -226,7 +210,6 @@
       )
     )
 
-    ;; ── Connector 3-pin (motor phases) ────────────────────────────────────────
     (symbol "Conn_3pin"
       (pin_names (offset 1.016) (hide yes))
       (in_bom yes) (on_board yes)
@@ -250,7 +233,6 @@
       )
     )
 
-    ;; ── Connector 2-pin (48V power input) ─────────────────────────────────────
     (symbol "Conn_2pin"
       (pin_names (offset 1.016) (hide yes))
       (in_bom yes) (on_board yes)
@@ -274,11 +256,7 @@
 
   )
 
-  ;; ════════════════════════════════════════════════════════════════════════════
-  ;; Component instances
-  ;; ════════════════════════════════════════════════════════════════════════════
 
-  ;; ── U1: DRV8353RS gate driver ─────────────────────────────────────────────
   (symbol (lib_id "DRV8353RS") (at 100 120 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "11111111-1111-1111-1111-111111111111")
@@ -309,7 +287,6 @@
     (pin "SH_C"     (uuid "11111111-1111-1111-1111-100000000019"))
   )
 
-  ;; ── High-side FETs (drain → VM bus, source → phase output) ───────────────
   (symbol (lib_id "IRF2907") (at 155 95 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "22222222-2222-2222-2222-100000000001")
@@ -338,7 +315,6 @@
     (pin "S" (uuid "22222222-2222-2222-2222-110000000009"))
   )
 
-  ;; ── Low-side FETs (drain → phase output, source → shunt → GND) ───────────
   (symbol (lib_id "IRF2907") (at 195 95 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "22222222-2222-2222-2222-200000000001")
@@ -367,7 +343,6 @@
     (pin "S" (uuid "22222222-2222-2222-2222-210000000009"))
   )
 
-  ;; ── Current sense shunt resistors (5 mΩ, per phase) ──────────────────────
   (symbol (lib_id "R_Shunt") (at 197.5 155 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "33333333-3333-3333-3333-100000000001")
@@ -393,7 +368,6 @@
     (pin "2" (uuid "33333333-3333-3333-3333-110000000006"))
   )
 
-  ;; ── Bootstrap capacitors (100 nF, one per high-side FET) ─────────────────
   (symbol (lib_id "C_Generic") (at 140 83 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "44444444-4444-4444-4444-100000000001")
@@ -419,7 +393,6 @@
     (pin "2" (uuid "44444444-4444-4444-4444-110000000006"))
   )
 
-  ;; ── VM decoupling caps (10µF + 100nF) ────────────────────────────────────
   (symbol (lib_id "C_Generic") (at 85 108 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "44444444-4444-4444-4444-200000000001")
@@ -437,7 +410,6 @@
     (pin "2" (uuid "44444444-4444-4444-4444-210000000004"))
   )
 
-  ;; ── Connectors ────────────────────────────────────────────────────────────
   (symbol (lib_id "Conn_2pin") (at 60 80 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "55555555-5555-5555-5555-100000000001")
@@ -468,11 +440,7 @@
     (pin "nFAULT" (uuid "55555555-5555-5555-5555-110000000011"))
   )
 
-  ;; ════════════════════════════════════════════════════════════════════════════
-  ;; Net labels — connect components via named nets
-  ;; ════════════════════════════════════════════════════════════════════════════
 
-  ;; Power bus
   (label (text "VM_BUS") (at 87.63 127.62 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "66666666-6666-6666-6666-000000000001"))
@@ -480,7 +448,6 @@
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "66666666-6666-6666-6666-000000000002"))
 
-  ;; Gate drives — Phase A
   (label (text "GH_A") (at 112.7 127.62 180)
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000011"))
@@ -494,7 +461,6 @@
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000014"))
 
-  ;; Gate drives — Phase B
   (label (text "GH_B") (at 112.7 120 180)
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000021"))
@@ -508,7 +474,6 @@
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000024"))
 
-  ;; Gate drives — Phase C
   (label (text "GH_C") (at 112.7 112.38 180)
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000031"))
@@ -522,7 +487,6 @@
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000034"))
 
-  ;; Phase outputs (midpoint of each half-bridge → motor)
   (label (text "PHASE_A") (at 178 95 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "66666666-6666-6666-6666-000000000041"))
@@ -542,7 +506,6 @@
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid "66666666-6666-6666-6666-000000000046"))
 
-  ;; SPI labels connecting J3 to U1
   (label (text "SPI_SCS")    (at 59.69 156.35 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "66666666-6666-6666-6666-000000000051"))

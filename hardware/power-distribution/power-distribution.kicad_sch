@@ -1,4 +1,4 @@
-(kicad_sch
+﻿(kicad_sch
   (version 20231120)
   (generator "eeschema")
   (generator_version "7.0.11")
@@ -15,7 +15,6 @@
 
   (lib_symbols
 
-    ;; ── Fuse (32A fast-blow) ──────────────────────────────────────────────────
     (symbol "Fuse_32A"
       (in_bom yes) (on_board yes)
       (property "Reference" "F" (at 0 2.54 0)
@@ -44,7 +43,6 @@
       )
     )
 
-    ;; ── TVS diode P6KE58A ─────────────────────────────────────────────────────
     (symbol "D_TVS"
       (in_bom yes) (on_board yes)
       (property "Reference" "D" (at 0 2.54 0)
@@ -77,7 +75,6 @@
       )
     )
 
-    ;; ── LMR36520 buck converter (48V→5V) ─────────────────────────────────────
     (symbol "LMR36520"
       (pin_names (offset 1.016))
       (in_bom yes) (on_board yes)
@@ -121,7 +118,6 @@
       )
     )
 
-    ;; ── TLV1117-33 LDO (5V→3.3V) ─────────────────────────────────────────────
     (symbol "TLV1117"
       (pin_names (offset 1.016))
       (in_bom yes) (on_board yes)
@@ -148,7 +144,6 @@
       )
     )
 
-    ;; ── IRF2907 (reused from motor driver) ───────────────────────────────────
     (symbol "IRF2907_estop"
       (in_bom yes) (on_board yes)
       (property "Reference" "Q" (at 5.08 0 0)
@@ -188,7 +183,6 @@
       )
     )
 
-    ;; ── Generic capacitor ─────────────────────────────────────────────────────
     (symbol "Cap"
       (in_bom yes) (on_board yes)
       (property "Reference" "C" (at 1.778 0 0)
@@ -211,7 +205,6 @@
       )
     )
 
-    ;; ── Inductor (buck output filter) ─────────────────────────────────────────
     (symbol "Inductor"
       (in_bom yes) (on_board yes)
       (property "Reference" "L" (at 0 2.54 0)
@@ -240,7 +233,6 @@
       )
     )
 
-    ;; ── 2-pin connector ───────────────────────────────────────────────────────
     (symbol "Conn2"
       (pin_names (offset 1.016) (hide yes))
       (in_bom yes) (on_board yes)
@@ -260,17 +252,7 @@
 
   )
 
-  ;; ════════════════════════════════════════════════════════════════════════════
-  ;; Component instances — left to right: input → protection → rails
-  ;;
-  ;;  J1(48V in) → F1(fuse) → D1(TVS) → Q1(E-stop) → VM_OUT (bus to motor drivers)
-  ;;                                                  ↓
-  ;;                                             U1(LMR36520, 48→5V)
-  ;;                                                  ↓
-  ;;                                             U2(TLV1117, 5→3.3V)
-  ;; ════════════════════════════════════════════════════════════════════════════
 
-  ;; J1 — 48V input connector (XT60 or Anderson SB50)
   (symbol (lib_id "Conn2") (at 30 100 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0001-0000-0000-0000-000000000001")
@@ -280,7 +262,6 @@
     (pin "GND" (uuid "aaaa0001-0000-0000-0000-000000000012"))
   )
 
-  ;; F1 — 32A fast-blow fuse (Littelfuse 0218032)
   (symbol (lib_id "Fuse_32A") (at 60 101.27 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0002-0000-0000-0000-000000000001")
@@ -290,7 +271,6 @@
     (pin "K" (uuid "aaaa0002-0000-0000-0000-000000000012"))
   )
 
-  ;; D1 — TVS clamp diode (58V, bidirectional)
   (symbol (lib_id "D_TVS") (at 85 101.27 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0003-0000-0000-0000-000000000001")
@@ -300,7 +280,6 @@
     (pin "K" (uuid "aaaa0003-0000-0000-0000-000000000012"))
   )
 
-  ;; Q1 — E-stop MOSFET
   (symbol (lib_id "IRF2907_estop") (at 120 100 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0004-0000-0000-0000-000000000001")
@@ -311,7 +290,6 @@
     (pin "S" (uuid "aaaa0004-0000-0000-0000-000000000013"))
   )
 
-  ;; R1 — Gate pull-up resistor (10kΩ, keeps FET on unless MCU pulls low)
   (symbol (lib_id "Cap") (at 108 88 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0004-0001-0000-0000-000000000001")
@@ -321,7 +299,6 @@
     (pin "2" (uuid "aaaa0004-0001-0000-0000-000000000012"))
   )
 
-  ;; U1 — LMR36520 buck converter 48V → 5V, 3A
   (symbol (lib_id "LMR36520") (at 155 130 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0005-0000-0000-0000-000000000001")
@@ -337,7 +314,6 @@
     (pin "PGND" (uuid "aaaa0005-0000-0000-0000-000000000018"))
   )
 
-  ;; L1 — Buck output inductor 22µH
   (symbol (lib_id "Inductor") (at 185 127.46 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0005-0001-0000-0000-000000000001")
@@ -347,7 +323,6 @@
     (pin "2" (uuid "aaaa0005-0001-0000-0000-000000000012"))
   )
 
-  ;; C_IN — Buck input cap (100µF + 100nF)
   (symbol (lib_id "Cap") (at 143 145 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0005-0002-0000-0000-000000000001")
@@ -365,7 +340,6 @@
     (pin "2" (uuid "aaaa0005-0002-0000-0000-000000000014"))
   )
 
-  ;; C_OUT — Buck output cap (220µF + 100nF)
   (symbol (lib_id "Cap") (at 200 145 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0005-0003-0000-0000-000000000001")
@@ -383,7 +357,6 @@
     (pin "2" (uuid "aaaa0005-0003-0000-0000-000000000014"))
   )
 
-  ;; U2 — TLV1117-33 LDO 5V → 3.3V
   (symbol (lib_id "TLV1117") (at 230 130 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0006-0000-0000-0000-000000000001")
@@ -394,7 +367,6 @@
     (pin "OUT" (uuid "aaaa0006-0000-0000-0000-000000000013"))
   )
 
-  ;; Output connectors
   (symbol (lib_id "Conn2") (at 145 75 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid "aaaa0007-0000-0000-0000-000000000001")
@@ -420,7 +392,6 @@
     (pin "GND" (uuid "aaaa0007-0000-0000-0000-000000000016"))
   )
 
-  ;; ── Net labels ────────────────────────────────────────────────────────────
   (label (text "48V_RAW") (at 33.81 101.27 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "bbbb0001-0000-0000-0000-000000000001"))

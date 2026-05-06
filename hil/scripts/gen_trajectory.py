@@ -47,7 +47,7 @@ def _write_csv(path: Path, rows: list[list[float]]) -> None:
         writer.writerow(['time_s'] + [f'j{i}' for i in range(NUM_JOINTS)])
         for row in rows:
             writer.writerow([f'{v:.6f}' for v in row])
-    print(f"Wrote {len(rows)} rows → {path}")
+    print(f"Wrote {len(rows)} rows -> {path}")
 
 
 # ── Trajectory generators ─────────────────────────────────────────────────────

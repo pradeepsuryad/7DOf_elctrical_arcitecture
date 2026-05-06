@@ -1,8 +1,8 @@
 """
-Overcurrent protection circuit — analytical model and design sweep plots.
+Overcurrent protection circuit -- analytical model and design sweep plots.
 
 Analyses the bus protection stage in sim/spice/overcurrent_protection.cir.
-Runs entirely from first principles — no SPICE installation needed.
+Runs entirely from first principles -- no SPICE installation needed.
 If a spice_output.dat file exists (from ngspice), overlays the simulation
 waveforms on the analytical plots for cross-validation.
 
@@ -24,7 +24,7 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')   # non-interactive backend — safe on headless / CI
+matplotlib.use('Agg')   # non-interactive backend -- safe on headless / CI
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -35,28 +35,28 @@ except ImportError:
     PARSER_AVAILABLE = False
 
 
-# ── Circuit parameters (matches overcurrent_protection.cir) ──────────────────
+# -- Circuit parameters (matches overcurrent_protection.cir) ------------------
 
 V_BUS       = 48.0      # V
-V_REF       = 75e-3     # V  — comparator trip threshold
-R_SENSE     = 5e-3      # Ω  — nominal design point
-I_CONT      = 10.0      # A  — normal continuous current
-I_FAULT     = 25.0      # A  — fault current in simulation
-FAULT_T     = 50e-6     # s  — fault onset time in simulation
+V_REF       = 75e-3     # V  -- comparator trip threshold
+R_SENSE     = 5e-3      # Ohm  -- nominal design point
+I_CONT      = 10.0      # A  -- normal continuous current
+I_FAULT     = 25.0      # A  -- fault current in simulation
+FAULT_T     = 50e-6     # s  -- fault onset time in simulation
 
-V_GATE_INIT = 12.0      # V  — gate supply
-V_TH        = 4.0       # V  — MOSFET gate threshold
-R_PULLUP    = 10e3      # Ω
-R_COMP      = 100.0     # Ω  — comparator output resistor
-R_GATE      = 10.0      # Ω  — series gate resistor
-C_GS        = 3.5e-9    # F  — MOSFET gate-source capacitance
+V_GATE_INIT = 12.0      # V  -- gate supply
+V_TH        = 4.0       # V  -- MOSFET gate threshold
+R_PULLUP    = 10e3      # Ohm
+R_COMP      = 100.0     # Ohm  -- comparator output resistor
+R_GATE      = 10.0      # Ohm  -- series gate resistor
+C_GS        = 3.5e-9    # F  -- MOSFET gate-source capacitance
 
-T_COMP_PROP = 150e-9    # s  — LM393 propagation delay
+T_COMP_PROP = 150e-9    # s  -- LM393 propagation delay
 
 FIGURES_DIR = Path(__file__).parent / 'figures'
 
 
-# ── Analytical models ─────────────────────────────────────────────────────────
+# -- Analytical models ---------------------------------------------------------
 
 def trip_current(r_sense: float, v_ref: float = V_REF) -> float:
     """Current at which the comparator trips (A)."""
@@ -82,15 +82,15 @@ def gate_rc_fall_time(r_pull: float = R_PULLUP,
       - Pull-down sink:  r_comp + r_gate to GND
 
     Thevenin equivalent at gate node:
-      V_th_eq = V_GATE_INIT × (r_comp + r_gate) / (r_pull + r_comp + r_gate)
-                ≈ 0 V  (since r_pull >> r_comp + r_gate)
-      R_th_eq = r_pull || (r_comp + r_gate)  ≈ r_comp + r_gate
+      V_th_eq = V_GATE_INIT x (r_comp + r_gate) / (r_pull + r_comp + r_gate)
+                ~= 0 V  (since r_pull >> r_comp + r_gate)
+      R_th_eq = r_pull || (r_comp + r_gate)  ~= r_comp + r_gate
 
-    Gate decays: V_gate(t) = V_th_eq + (v_init - V_th_eq) × exp(-t / τ)
-    with τ = R_th_eq × c_gs.
+    Gate decays: V_gate(t) = V_th_eq + (v_init - V_th_eq) x exp(-t / tau)
+    with tau = R_th_eq x c_gs.
 
     Solving for V_gate(t_fall) = v_th:
-      t_fall = τ × ln((v_init - V_th_eq) / (v_th - V_th_eq))
+      t_fall = tau x ln((v_init - V_th_eq) / (v_th - V_th_eq))
     """
     r_th  = (r_pull * (r_comp + r_gate)) / (r_pull + r_comp + r_gate)
     v_th_eq = V_GATE_INIT * (r_comp + r_gate) / (r_pull + r_comp + r_gate)
@@ -132,7 +132,7 @@ def gate_voltage_waveform(t: np.ndarray, fault_onset: float = FAULT_T
     return v
 
 
-# ── Plot 1 — Trip current and sense power vs R_sense ─────────────────────────
+# -- Plot 1 -- Trip current and sense power vs R_sense -------------------------
 
 def plot_design_sweep(save_dir: Path) -> None:
     """
@@ -140,7 +140,7 @@ def plot_design_sweep(save_dir: Path) -> None:
       - trip current decreases (tighter protection)
       - continuous power dissipation increases (more heat at normal load)
 
-    The vertical line shows the nominal 5 mΩ design point.
+    The vertical line shows the nominal 5 mOhm design point.
     The horizontal band shows the 2 W resistor rating.
     """
     r_range  = np.linspace(1e-3, 30e-3, 500)
@@ -155,7 +155,7 @@ def plot_design_sweep(save_dir: Path) -> None:
              label=f'Continuous power at {I_CONT:.0f} A (W)')
 
     # Nominal design point
-    ax1.axvline(R_SENSE * 1e3, color='gray', ls=':', lw=1.5, label='Nominal 5 mΩ')
+    ax1.axvline(R_SENSE * 1e3, color='gray', ls=':', lw=1.5, label='Nominal 5 mOhm')
     ax1.axhline(trip_current(R_SENSE), color='#1f77b4', ls=':', lw=1, alpha=0.5)
     ax2.axhline(2.0, color='#d62728', ls=':', lw=1, alpha=0.5,
                 label='2 W resistor rating')
@@ -167,10 +167,10 @@ def plot_design_sweep(save_dir: Path) -> None:
         xytext=(R_SENSE * 1e3 + 3, trip_current(R_SENSE) + 2),
         fontsize=9, color='#1f77b4')
 
-    ax1.set_xlabel('R_sense (mΩ)')
+    ax1.set_xlabel('R_sense (mOhm)')
     ax1.set_ylabel('Trip current (A)', color='#1f77b4')
     ax2.set_ylabel('Sense resistor power at 10 A (W)', color='#d62728')
-    ax1.set_title('Overcurrent Protection — Design Sweep\nTrip current vs sense resistor value')
+    ax1.set_title('Overcurrent Protection -- Design Sweep\nTrip current vs sense resistor value')
 
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -184,14 +184,14 @@ def plot_design_sweep(save_dir: Path) -> None:
     print(f"  Saved: {out.name}")
 
 
-# ── Plot 2 — Gate voltage waveform ────────────────────────────────────────────
+# -- Plot 2 -- Gate voltage waveform --------------------------------------------
 
 def plot_gate_waveform(save_dir: Path, spice_data: dict = None) -> None:
     """
     Gate voltage from fault onset to full turn-off.
     Shows: analytical RC decay, VTH threshold, and (if available) SPICE simulation.
     """
-    t_end  = FAULT_T + 3e-6    # 3 µs after fault — captures full decay
+    t_end  = FAULT_T + 3e-6    # 3 us after fault -- captures full decay
     t      = np.linspace(FAULT_T - 0.5e-6, t_end, 5000)
     v_gate = gate_voltage_waveform(t)
 
@@ -222,10 +222,10 @@ def plot_gate_waveform(save_dir: Path, spice_data: dict = None) -> None:
                      T_COMP_PROP * 1e6, t_total * 1e6,
                      alpha=0.08, color='orange', label='Gate RC fall')
 
-    ax.set_xlabel('Time after fault onset (µs)')
+    ax.set_xlabel('Time after fault onset (us)')
     ax.set_ylabel('Gate voltage (V)')
     ax.set_title(f'Gate Turn-Off Waveform\n'
-                 f'τ = {gate_rc_fall_time()*1e9:.0f} ns  |  '
+                 f'tau = {gate_rc_fall_time()*1e9:.0f} ns  |  '
                  f'Total trip time = {t_total*1e9:.0f} ns')
     ax.set_ylim(-0.5, V_GATE_INIT + 1)
     ax.legend(fontsize=8, loc='upper right')
@@ -237,12 +237,12 @@ def plot_gate_waveform(save_dir: Path, spice_data: dict = None) -> None:
     print(f"  Saved: {out.name}")
 
 
-# ── Plot 3 — Full fault event timeline ───────────────────────────────────────
+# -- Plot 3 -- Full fault event timeline ---------------------------------------
 
 def plot_fault_timeline(save_dir: Path, spice_data: dict = None) -> None:
     """
     Three-panel view of the full simulation window:
-      Top:    Sense resistor voltage (= current × R_sense)
+      Top:    Sense resistor voltage (= current x R_sense)
       Middle: Gate voltage
       Bottom: Bus output voltage
     """
@@ -268,7 +268,7 @@ def plot_fault_timeline(save_dir: Path, spice_data: dict = None) -> None:
     axes = [fig.add_subplot(gs[i]) for i in range(3)]
 
     colors = ['#2ca02c', '#1f77b4', '#d62728']
-    labels = ['V(sense_hi) — mV', 'V(gate) — V', 'V(bus_out) — V']
+    labels = ['V(sense_hi) -- mV', 'V(gate) -- V', 'V(bus_out) -- V']
     data_an = [v_sense * 1e3, v_gate, v_bus]
 
     for ax, col, lbl, d_an in zip(axes, colors, labels, data_an):
@@ -300,11 +300,11 @@ def plot_fault_timeline(save_dir: Path, spice_data: dict = None) -> None:
         ax.legend(fontsize=8, loc='upper left')
 
     axes[-1].tick_params(axis='x', labelbottom=True)
-    axes[-1].set_xlabel('Time (µs)')
-    axes[0].set_title('Overcurrent Protection — Fault Event Timeline\n'
+    axes[-1].set_xlabel('Time (us)')
+    axes[0].set_title('Overcurrent Protection -- Fault Event Timeline\n'
                        f'Bus = {V_BUS:.0f} V  |  '
                        f'I_fault = {I_FAULT:.0f} A  |  '
-                       f'R_sense = {R_SENSE*1e3:.0f} mΩ  |  '
+                       f'R_sense = {R_SENSE*1e3:.0f} mOhm  |  '
                        f'V_ref = {V_REF*1e3:.0f} mV')
 
     out = save_dir / '03_protection_timeline.png'
@@ -313,7 +313,7 @@ def plot_fault_timeline(save_dir: Path, spice_data: dict = None) -> None:
     print(f"  Saved: {out.name}")
 
 
-# ── Design summary ────────────────────────────────────────────────────────────
+# -- Design summary ------------------------------------------------------------
 
 def print_design_summary() -> None:
     t_fall  = gate_rc_fall_time()
@@ -322,36 +322,36 @@ def print_design_summary() -> None:
     r_th = (R_PULLUP * (R_COMP + R_GATE)) / (R_PULLUP + R_COMP + R_GATE)
     tau  = r_th * C_GS
 
-    print("\n" + "═" * 56)
-    print("  Overcurrent Protection — Design Summary")
-    print("═" * 56)
+    print("\n" + "=" * 56)
+    print("  Overcurrent Protection - Design Summary")
+    print("=" * 56)
     print(f"  Bus voltage            {V_BUS:.0f} V")
     print(f"  Continuous current     {I_CONT:.0f} A")
-    print(f"  Sense resistor         {R_SENSE*1e3:.1f} mΩ")
+    print(f"  Sense resistor         {R_SENSE*1e3:.1f} mOhm")
     print(f"  V_sense at I_cont      {sense_power(I_CONT, R_SENSE)/I_CONT*1e3:.1f} mV"
-          f"  (= {I_CONT:.0f} A × {R_SENSE*1e3:.0f} mΩ)")
+          f"  (= {I_CONT:.0f} A x {R_SENSE*1e3:.0f} mOhm)")
     print(f"  V_ref (trip threshold) {V_REF*1e3:.0f} mV")
     print(f"  Trip current           {trip_current(R_SENSE):.0f} A")
-    print(f"  Headroom               {trip_current(R_SENSE)/I_CONT:.1f}× continuous")
+    print(f"  Headroom               {trip_current(R_SENSE)/I_CONT:.1f}x continuous")
     print()
     print(f"  Sense resistor power @ {I_CONT:.0f} A:  "
           f"{sense_power(I_CONT, R_SENSE)*1e3:.0f} mW")
     print(f"  Sense resistor power @ {trip_current(R_SENSE):.0f} A:  "
           f"{sense_power(trip_current(R_SENSE), R_SENSE)*1000:.0f} mW")
     print()
-    print(f"  Gate drive Thevenin R  {r_th:.1f} Ω")
+    print(f"  Gate drive Thevenin R  {r_th:.1f} Ohm")
     print(f"  Gate RC time constant  {tau*1e9:.0f} ns")
     print(f"  Gate fall time         {t_fall*1e9:.0f} ns  "
-          f"(12 V → {V_TH:.0f} V threshold)")
+          f"(12 V to {V_TH:.0f} V threshold)")
     print(f"  Comparator prop. delay {T_COMP_PROP*1e9:.0f} ns  (LM393 typ)")
     print(f"  Total trip time        {t_total*1e9:.0f} ns")
     print(f"  Energy in Rsense       "
-          f"{(I_FAULT**2 * R_SENSE * t_total)*1e6:.2f} µJ  "
+          f"{(I_FAULT**2 * R_SENSE * t_total)*1e6:.2f} uJ  "
           f"(fault burst, negligible)")
-    print("═" * 56 + "\n")
+    print("=" * 56 + "\n")
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
+# -- CLI -----------------------------------------------------------------------
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -366,7 +366,7 @@ def main() -> None:
     spice_data = None
     if args.spice:
         if not PARSER_AVAILABLE:
-            print("Warning: spice_parser.py not found — skipping simulation overlay.")
+            print("Warning: spice_parser.py not found -- skipping simulation overlay.")
         else:
             try:
                 spice_data = load_wrdata(args.spice)

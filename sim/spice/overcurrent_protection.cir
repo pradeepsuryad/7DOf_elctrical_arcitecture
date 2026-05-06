@@ -1,108 +1,60 @@
-* ══════════════════════════════════════════════════════════════════════════════
-* Overcurrent Protection — 48 V Bus
-* Arm-core project / sim/spice/overcurrent_protection.cir
-*
-* Circuit topology:
-*
-*   48V_IN ──── Rsense ──── drain(M1) ──── 48V_OUT (to motor drivers)
-*                │                │
-*              V_sense        source(M1) ──── GND
-*                │
-*           ┌───▼───────────────────────────────┐
-*           │  LM393 open-collector comparator   │
-*           │  IN+ = V_sense hi-side             │
-*           │  IN- = V_ref  (trip threshold)      │
-*           │  OUT → gate(M1) via R_gate          │
-*           │        (active-low: OUT=low → FET off) │
-*           └───────────────────────────────────┘
-*
-* Design parameters:
-*   Bus voltage:       48 V
-*   Max continuous:    10 A  (motor draw)
-*   Trip current:      15 A  (50 % headroom over continuous)
-*   Rsense:            5 mΩ  (low loss: P = I² × R = 10² × 0.005 = 0.5 W)
-*   V_trip = I_trip × Rsense = 15 × 0.005 = 75 mV
-*   V_ref:             75 mV
-*   FET:               IRF2907  (75 V, 209 A, Rds_on 4.5 mΩ)
-*   Response time:     < 1 µs  (comparator propagation ~150 ns + gate RC ~300 ns)
-*
-* Run this .tran simulation to see:
-*   1. Normal operation (10 A load): FET stays on, V_sense < V_ref
-*   2. Fault at t=50µs (25 A pulse): comparator trips, FET turns off in ~500 ns
-* ══════════════════════════════════════════════════════════════════════════════
-
 .title Overcurrent Protection 48V Bus
 
-* ── Supply ────────────────────────────────────────────────────────────────────
-Vbus   48V_IN  GND  48
-
-* ── Sense resistor (5 mΩ, 2 W rated) ─────────────────────────────────────────
-Rsense  48V_IN  SENSE_HI  5m
-
-* ── Main bus MOSFET (simplified SPICE model for IRF2907) ──────────────────────
-* Real design: use manufacturer SPICE model from Vishay/Infineon
-M1  SENSE_HI  GATE  GND  GND  NMOS_IRF2907
-.model NMOS_IRF2907 NMOS(
-+  Level=1
-+  Vto=4         ; gate threshold ~4 V
-+  Kp=200        ; transconductance parameter (simplified)
-+  Rd=0.0045     ; Rds_on = 4.5 mΩ
-+  Rs=0          ;
-+  Cgd=1.5n      ; gate-drain capacitance (affects turn-off speed)
-+  Cgs=3.5n      ; gate-source capacitance
-+ )
-
-* ── Gate drive: pull-up to 12 V via Rpullup, comparator pulls down ────────────
-* Gate is held HIGH (FET on) by Rpullup; comparator output sinks gate to GND.
-Vgate_supply  GATE_VCC  GND  12
-Rpullup       GATE_VCC  GATE  10k
-
-* ── LM393 comparator model (behavioural) ──────────────────────────────────────
-* The comparator output is open-collector.  We model it as a voltage-controlled
-* switch: closes (pulls gate LOW) when V(SENSE_HI) - V(GND) > V_ref.
-* In a real netlist, substitute the LM393 subcircuit from Texas Instruments.
-Vref    VREF    GND   75m          ; 75 mV trip threshold
-Ecomp   COMP_OUT  GND  VALUE={IF(V(SENSE_HI)-V(GND) > V(VREF), 0, 12)}
-Rcomp   COMP_OUT  GATE  100        ; comparator output → gate
-
-* ── Gate resistor (limit di/dt and ringing during turn-off) ───────────────────
-Rgate   GATE  GATE_NODE  10        ; 10 Ω slows turn-off to ~300 ns
-
-* ── Bus output capacitor (holds voltage briefly during trip) ──────────────────
-Cbus    48V_OUT  GND  100u  IC=48  ; 100 µF electrolytic, pre-charged to 48 V
-
-* ── Load: piecewise linear current source to simulate fault ───────────────────
-* t=0–50µs:  10 A (normal)
-* t=50µs+:   25 A (fault, overcurrent condition)
-Iload   48V_OUT  GND  PWL(
-+  0     10
-+  50u   10
-+  50.1u 25
-+  500u  25
-+ )
-
-* ── Probing ────────────────────────────────────────────────────────────────────
-* Plot these nodes in LTspice / ngspice:
-*   V(SENSE_HI)   → voltage across Rsense (= I_bus × 5 mΩ)
-*   V(GATE)       → gate voltage (12 V = on, 0 V = off)
-*   V(48V_OUT)    → output bus voltage (drops when FET trips off)
-*   I(Iload)      → load current
-
-* ── Transient analysis ─────────────────────────────────────────────────────────
-.tran 10n 500u 0 10n     ; step=10 ns, stop=500 µs, start=0, max_step=10 ns
-
-* ── ngspice batch output ────────────────────────────────────────────────────────
-* Run with:  ngspice -b overcurrent_protection.cir
-* Produces:  spice_output.dat  (ASCII, parseable by sim/analysis/spice_parser.py)
+* -----------------------------------------------------------------------
+* 48V bus overcurrent protection simulation
 *
-* Column order in the output file:
-*   time  V(SENSE_HI)  V(GATE)  V(48V_OUT)  I(Iload)
+* Normal: 10A load -> V_sense = 50mV < 75mV -> gate HIGH -> switch ON
+* Fault:  25A load -> V_sense = 125mV > 75mV -> gate pulled LOW -> OFF
+* Expected trip time: ~531ns (comparator 150ns + gate RC 381ns)
+* -----------------------------------------------------------------------
+
+* 48V bus supply
+Vbus    VBUS  GND  48
+
+* Series protection switch modelling IRF2907
+* S element: n+  n-  ctrl+  ctrl-  model
+S1      VBUS  BUS_OUT  GATE  GND  SWMOD
+.model  SWMOD  SW(Ron=0.0045 Roff=1MEG Vt=4.0 Vh=0.5)
+
+* Gate pull-up resistor holds gate at 12V (switch ON) during normal operation
+Vgvcc   GVCC  GND  12
+Rpullup GVCC  GATE  10k
+
+* Gate capacitance (IRF2907 Ciss ~3.5nF, determines gate fall time)
+Cgate   GATE  GND  3.5n  IC=12
+
+* Sense resistor: 5 mOhm
+* V_sense = V(BUS_OUT) - V(SENSE_LO) = Iload x 5mOhm
+Rsense  BUS_OUT  SENSE_LO  5m
+
+* Bus capacitor (holds bus voltage briefly during trip)
+Cbus    SENSE_LO  GND  100u  IC=48
+
+* Load: 10A normal, 25A fault at t=50us
+Iload   SENSE_LO  GND  PWL(0 10  50u 10  50.1u 25  500u 25)
+
+* Trip threshold: 75mV = 15A x 5mOhm
+Vref    VREF  GND  75m
+
+* Behavioural LM393 comparator using u() unit-step function
+* u(x) = 1 when x > 0, 0 when x < 0
+* V_sense = V(BUS_OUT)-V(SENSE_LO)
+* Normal (V_sense < Vref): u(Vref - V_sense) = 1 -> output = 12V (gate HIGH)
+* Fault  (V_sense > Vref): u(Vref - V_sense) = 0 -> output = 0V  (gate LOW)
+Bcomp   CNODE  GND  V=12*u(V(VREF)-(V(BUS_OUT)-V(SENSE_LO)))
+Rcomp   CNODE  GATE  100
+
+* Transient: 10ns step, run to 500us, use initial conditions
+.tran 10n 500u UIC
+
+* Batch run (ngspice -b overcurrent_protection.cir)
 .control
 run
-wrdata spice_output.dat V(SENSE_HI) V(GATE) V(48V_OUT) I(Iload)
+wrdata spice_output.dat v(BUS_OUT) v(SENSE_LO) v(GATE) I(Iload)
 quit
 .endc
 
-* LTspice: use the .probe line below (comment out .control block above).
-.probe V(SENSE_HI) V(GATE) V(48V_OUT) I(Iload)
+* LTspice probe (comment out .control block above when using LTspice)
+.probe v(BUS_OUT) v(SENSE_LO) v(GATE) I(Iload)
+
 .end

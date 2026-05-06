@@ -1,122 +1,85 @@
 """
 Parse ngspice ASCII output files produced by the `wrdata` command.
 
-ngspice wrdata format (two header lines, then space-separated columns):
-  Line 1: signal names separated by spaces  (e.g. "time v(sense_hi) v(gate) ...")
-  Line 2: blank or units line (skipped)
-  Rest:   rows of floating-point numbers, one row per time step
+ngspice wrdata format (no header — raw paired columns):
+  Each row: t1 v1 t2 v2 t3 v3 ...
+  where t1==t2==t3==... (same time scale per row, one pair per signal).
 
-Returns a dict mapping lowercase signal name → 1-D numpy array.
+Signal order matches the wrdata argument order in the .cir file:
+  v(BUS_OUT)  v(SENSE_LO)  v(GATE)  I(Iload)
+
+Returns a dict: signal name -> 1-D numpy array, plus 'time'.
 
 Example
 -------
-    from spice_parser import load_wrdata
+    from spice_parser import load_wrdata, find_trip_time
     data = load_wrdata('sim/spice/spice_output.dat')
-    time        = data['time']
-    gate_volts  = data['v(gate)']
+    time  = data['time']
+    gate  = data['v(gate)']
+    trip  = find_trip_time(time, gate)
 """
 
 from pathlib import Path
 from typing import Dict
 import numpy as np
 
+# Signal names matching the wrdata line in overcurrent_protection.cir:
+#   wrdata spice_output.dat v(BUS_OUT) v(SENSE_LO) v(GATE) I(Iload)
+SIGNAL_NAMES = ['v(bus_out)', 'v(sense_lo)', 'v(gate)', 'i(iload)']
+
 
 def load_wrdata(path: str | Path) -> Dict[str, np.ndarray]:
     """
-    Load an ngspice `wrdata` ASCII file.
+    Load an ngspice wrdata ASCII file.
 
-    Parameters
-    ----------
-    path : path to the .dat file produced by ngspice wrdata
+    ngspice wrdata writes one time+value pair per signal per row:
+        t  sig0  t  sig1  t  sig2 ...
+    This function extracts the common time axis (column 0) and each signal.
 
     Returns
     -------
-    dict of {signal_name: np.ndarray}  — all names are lowercased.
-
-    Raises
-    ------
-    FileNotFoundError if the file does not exist.
-    ValueError if the file cannot be parsed.
+    dict with keys 'time' and each name from SIGNAL_NAMES (all lowercase).
     """
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(
             f"SPICE output not found: {path}\n"
-            "Run the simulation first:\n"
-            "  ngspice -b sim/spice/overcurrent_protection.cir\n"
-            "The output file lands next to the .cir file.")
+            "Run: ngspice_con -b sim/spice/overcurrent_protection.cir")
 
-    lines = path.read_text().splitlines()
-
-    # Find the header line (first non-empty, non-comment line).
-    header_idx = next(
-        (i for i, ln in enumerate(lines) if ln.strip() and not ln.startswith('*')),
-        None)
-    if header_idx is None:
-        raise ValueError(f"Could not find header in {path}")
-
-    names = lines[header_idx].split()
-    names = [n.lower() for n in names]
-
-    # Skip the header line (and an optional units line directly after it).
-    data_start = header_idx + 1
-    if data_start < len(lines) and not _is_data_line(lines[data_start]):
-        data_start += 1
-
-    # Parse numeric rows.
     rows = []
-    for ln in lines[data_start:]:
-        ln = ln.strip()
-        if not ln or ln.startswith('*'):
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith('*'):
             continue
         try:
-            rows.append([float(x) for x in ln.split()])
+            vals = [float(x) for x in line.split()]
+            if vals:
+                rows.append(vals)
         except ValueError:
-            continue  # skip malformed lines (e.g. blank/comment inside data)
+            continue
 
     if not rows:
-        raise ValueError(f"No numeric data found in {path}")
+        raise ValueError(f"No numeric data in {path}")
 
-    arr = np.array(rows)  # shape: (n_points, n_signals)
+    arr = np.array(rows)   # shape: (n_points, 2 * n_signals)
 
-    if arr.shape[1] != len(names):
-        raise ValueError(
-            f"Header has {len(names)} columns but data has {arr.shape[1]}. "
-            "Check wrdata signal list in the .cir file.")
-
-    return {name: arr[:, i] for i, name in enumerate(names)}
-
-
-def _is_data_line(line: str) -> bool:
-    """True if the line looks like a row of numbers (not a header or comment)."""
-    line = line.strip()
-    if not line or line.startswith('*'):
-        return False
-    try:
-        float(line.split()[0])
-        return True
-    except (ValueError, IndexError):
-        return False
+    # Column layout: t sig0 t sig1 t sig2 ...
+    time    = arr[:, 0]
+    signals = {name: arr[:, 1 + 2 * i] for i, name in enumerate(SIGNAL_NAMES)}
+    signals['time'] = time
+    return signals
 
 
 def find_trip_time(time: np.ndarray, gate_v: np.ndarray,
                    vth: float = 4.0, fault_onset_s: float = 50e-6) -> float:
     """
-    Return the time (seconds) at which the gate voltage first drops below `vth`
-    after `fault_onset_s`.  Returns NaN if the gate never trips.
-
-    Parameters
-    ----------
-    time        : time array from load_wrdata
-    gate_v      : V(GATE) array from load_wrdata
-    vth         : MOSFET gate threshold voltage (V), default 4.0 V
-    fault_onset_s : simulation time when the fault was injected
+    Return the time (s) when gate voltage first drops below vth after fault onset.
+    Returns NaN if the gate never trips.
     """
-    mask = time >= fault_onset_s
-    t_after  = time[mask]
-    vg_after = gate_v[mask]
-
-    tripped = np.where(vg_after < vth)[0]
+    mask    = time >= fault_onset_s
+    t_after = time[mask]
+    vg      = gate_v[mask]
+    tripped = np.where(vg < vth)[0]
     if len(tripped) == 0:
         return float('nan')
     return float(t_after[tripped[0]])

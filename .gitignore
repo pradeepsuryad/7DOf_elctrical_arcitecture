@@ -39,3 +39,20 @@ venv/
 *.csv.bak
 hil/logs/*.csv        # HIL run logs — can be large; store externally if needed
 hil/trajectories/*.csv  # generated trajectories — regenerate with gen_trajectory.py
+
+# VSCode Local History extension
+.history/
+**/.history/
+
+# KiCad lock files (transient, per-session)
+hardware/**/~*.lck
+**/~*.kicad_*.lck
+
+# ngspice run logs and raw output
+sim/spice/ng_*.txt
+sim/spice/*.dat
+sim/spice/*.raw
+
+# Generated analysis figures and HIL logs (regenerable from sim/analysis scripts)
+sim/analysis/figures/
+hil/logs/*.png
